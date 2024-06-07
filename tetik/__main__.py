@@ -9,7 +9,7 @@ from colorama import Fore, Style, Back
 from colorama.ansi import clear_screen
 import re
 from urllib.parse import urlparse
-
+from notifypy import Notify
 
 def read_config(config_path=None):
     if not config_path:
@@ -23,6 +23,14 @@ def read_config(config_path=None):
     with open(config_path) as fp:
         return yaml.safe_load(fp)
 
+def notify(title, message):
+    audio_path = os.path.join(os.path.dirname(os.path.abspath('__main__.py')), 'alarm.wav')
+    notification = Notify()
+    notification.title = title
+    notification.message = message
+    notification.audio = audio_path
+
+    notification.send()
 
 async def alerts(*args, **kwargs):
     url_args = '/api/v2/alerts/groups?silenced=false&inhibited=false&active=true'
@@ -152,6 +160,9 @@ async def alerts(*args, **kwargs):
                         )
 
                     print(out)
+                    notification_interval = kwargs['interval'] or 30
+                    if delta.seconds <= notification_interval:
+                        notify(labels['alertname'], annotations.get('description', ''))
 
                     if kwargs['details'] is None:
                         break
